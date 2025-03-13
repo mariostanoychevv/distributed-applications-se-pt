@@ -1,0 +1,686 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: #333;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            animation: slideDown 0.5s ease-in-out;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
+
+        .orders {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 10px;
+        }
+
+        .order-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s ease;
+        }
+
+        .order-card.deleting {
+            animation: sink 0.8s ease-in-out forwards;
+        }
+
+        @keyframes sink {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .order-card.editing {
+            animation: flash 0.5s ease-in-out;
+        }
+
+        @keyframes flash {
+            0% { background-color: #fff; }
+            50% { background-color: #d4edda; }
+            100% { background-color: #fff; }
+        }
+
+        .order-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .order-info h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .order-info p {
+            margin: 0;
+            color: #666;
+        }
+
+        .order-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .order-actions input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 60px;
+        }
+
+        .order-actions button {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .order-actions button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
+
+        .delete-btn {
+            background: #ff4757;
+        }
+
+        .delete-btn:hover {
+            background: #ff6b81;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+    <script>
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('success')) {
+                alert(params.get('success'));
+            }
+        };
+
+        async function deleteOrder(event, orderId) {
+            event.preventDefault();
+
+            const form = event.target;
+            const orderCard = form.closest('.order-card');
+
+            orderCard.classList.add('deleting');
+
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    orderCard.remove();
+                } else {
+                    alert('Failed to delete the order. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        let editOrderTimeouts = {};
+
+        function debounceEditOrder(event, orderId) {
+            clearTimeout(editOrderTimeouts[orderId]);
+
+            editOrderTimeouts[orderId] = setTimeout(() => {
+                editOrder(event, orderId);
+            }, 500);
+        }
+
+        async function editOrder(event, orderId) {
+            event.preventDefault();
+
+            const input = event.target;
+            const form = input.closest('form');
+            const orderCard = input.closest('.order-card');
+            const newQuantity = input.value;
+
+            if (!newQuantity || newQuantity < 1) return;
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    orderCard.classList.add('editing');
+                    setTimeout(() => orderCard.classList.remove('editing'), 500);
+
+                    const quantityElement = [...orderCard.querySelectorAll('.order-info p')]
+                        .find(p => p.textContent.includes("Брой стекове:"));
+
+                    if (quantityElement) {
+                        const strongTag = quantityElement.querySelector('strong');
+                        if (strongTag) {
+                            strongTag.nextSibling.nodeValue = ` ${newQuantity}`;
+                        }
+                    }
+                } else {
+                    alert('Failed to update the order. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        async function sendOrdersEmail(event) {
+            event.preventDefault();
+
+            try {
+                const response = await fetch('/send-orders-email', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    alert('Поръчките бяха изпратени успешно по имейл!');
+                } else {
+                    alert('Грешка при изпращане на имейла. Моля, опитайте отново.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Възникна грешка. Моля, опитайте отново.');
+            }
+        }
+
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Кошница</h1>
+
+        <div class="nav">
+            <a href="/menu" class="btn">Обратно към менюто</a>
+            {% if is_admin %}
+                <form action="/send-orders-email" method="post" onsubmit="sendOrdersEmail(event)">
+                    <button type="submit" class="btn">Изпрати поръчките по имейл</button>
+                </form>
+            {% endif %}
+            <a href="/finished-orders" class="btn">Минали поръчки</a>
+        </div>
+
+        <div class="orders">
+            {% for order in orders %}
+            <div class="order-card" id="order-{{ order.order_id }}">
+                <div class="order-info">
+                    {% if is_admin %}
+                    <p><strong>User:</strong> {{ order.username }}</p>
+                    {% endif %}
+                    <h3>{{ order.name }}</h3>
+                    <p><strong>Брой стекове:</strong> {{ order.quantity }}</p>
+                    <p><strong>Брой в стек:</strong> {{ order.stock_quantity }}</p>
+                    <p><strong>Цена на брой:</strong> {{ order.price }}лв.</p>
+                </div>
+
+                <div class="order-actions">
+                    <form action="/orders/edit/{{ order.order_id }}" method="post" onsubmit="editOrder(event, '{{ order.order_id }}')">
+                        <input type="number" name="quantity" value="{{ order.quantity }}" min="1" required oninput="debounceEditOrder(event, '{{ order.order_id }}')">
+                    </form>
+
+                    <form action="/orders/delete/{{ order.order_id }}" method="post" onsubmit="deleteOrder(event, '{{ order.order_id }}')">
+                        <button type="submit" class="delete-btn">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</body>
+</html> -->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: #333;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            animation: slideDown 0.5s ease-in-out;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
+
+        .orders {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 10px;
+        }
+
+        .order-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s ease;
+        }
+
+        .order-card.deleting {
+            animation: sink 0.8s ease-in-out forwards;
+        }
+
+        @keyframes sink {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .order-card.editing {
+            animation: flash 0.5s ease-in-out;
+        }
+
+        @keyframes flash {
+            0% { background-color: #fff; }
+            50% { background-color: #d4edda; }
+            100% { background-color: #fff; }
+        }
+
+        .order-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .order-info h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #333;
+            flex: 1;
+        }
+
+        .order-details {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .order-details p {
+            margin: 0;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .order-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .order-actions input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 60px;
+        }
+
+        .order-actions button {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .order-actions button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
+
+        .delete-btn {
+            background: #ff4757;
+        }
+
+        .delete-btn:hover {
+            background: #ff6b81;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+    <script>
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('success')) {
+                alert(params.get('success'));
+            }
+        };
+
+        async function deleteOrder(event, orderId) {
+            event.preventDefault();
+
+            const form = event.target;
+            const orderCard = form.closest('.order-card');
+
+            orderCard.classList.add('deleting');
+
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    orderCard.remove();
+                } else {
+                    alert('Failed to delete the order. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        let editOrderTimeouts = {};
+
+        function debounceEditOrder(event, orderId) {
+            clearTimeout(editOrderTimeouts[orderId]);
+
+            const input = event.target;
+            setTimeout(() => {
+                updateFinalPrice(input, orderId);
+            }, 500);
+
+            editOrderTimeouts[orderId] = setTimeout(() => {
+                editOrder(event, orderId);
+            }, 500);
+        }
+
+        function updateFinalPrice(input, orderId) {
+            const orderCard = input.closest('.order-card');
+            const quantity = parseFloat(input.value); // Брой стекове
+            const stockQuantity = parseFloat(orderCard.querySelector('.order-details p:nth-child(2)').textContent.match(/\d+/)[0]);
+            const pricePerItem = parseFloat(orderCard.querySelector('.order-details p:nth-child(3)').textContent.match(/\d+\.?\d*/)[0]);
+
+            const finalPrice = (quantity * stockQuantity * pricePerItem).toFixed(2);
+            orderCard.querySelector('.order-details p:nth-child(4)').innerHTML = `<strong>Крайна цена:</strong> ${finalPrice}лв.`;
+        }
+
+        async function editOrder(event, orderId) {
+            event.preventDefault();
+
+            const input = event.target;
+            const form = input.closest('form');
+            const orderCard = input.closest('.order-card');
+            const newQuantity = input.value;
+
+            if (!newQuantity || newQuantity < 1) return;
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    orderCard.classList.add('editing');
+                    setTimeout(() => orderCard.classList.remove('editing'), 500);
+
+                    const quantityElement = [...orderCard.querySelectorAll('.order-info p')]
+                        .find(p => p.textContent.includes("Брой стекове:"));
+
+                    if (quantityElement) {
+                        const strongTag = quantityElement.querySelector('strong');
+                        if (strongTag) {
+                            strongTag.nextSibling.nodeValue = ` ${newQuantity}`;
+                        }
+                    }
+                } else {
+                    alert('Failed to update the order. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        async function sendOrdersEmail(event) {
+            event.preventDefault();
+
+            try {
+                const response = await fetch('/send-orders-email', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    alert('Поръчките бяха изпратени успешно по имейл!');
+                } else {
+                    alert('Грешка при изпращане на имейла. Моля, опитайте отново.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Възникна грешка. Моля, опитайте отново.');
+            }
+        }
+
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Кошница</h1> 
+
+        <div class="nav">
+            <a href="/menu" class="btn">Обратно към менюто</a>
+            {% if is_admin %}
+                <form action="/send-orders-email" method="post" onsubmit="sendOrdersEmail(event)">
+                    <button type="submit" class="btn">Изпрати поръчките по имейл</button>
+                </form>
+            {% endif %}
+            <a href="/finished-orders" class="btn">Минали поръчки</a>
+        </div>
+
+        <div class="orders">
+            {% for order in orders %}
+            <div class="order-card" id="order-{{ order.order_id }}">
+                <div class="order-info">
+                    {% if is_admin %}
+                    <p><strong>User:</strong> {{ order.username }}</p>
+                    {% endif %}
+                    <h3>{{ order.name }}</h3>
+                    <div class="order-details">
+                        <p><strong>Брой стекове:</strong> {{ order.quantity }}</p>
+                        <p><strong>Брой в стек:</strong> {{ order.stock_quantity }}</p>
+                        <p><strong>Цена на брой:</strong> {{ order.price }}лв.</p>
+                    </div>
+                </div>
+            
+                <div class="order-actions">
+                    <form action="/orders/edit/{{ order.order_id }}" method="post" onsubmit="editOrder(event, '{{ order.order_id }}')">
+                        <input type="number" name="quantity" value="{{ order.quantity }}" min="1" required oninput="debounceEditOrder(event, '{{ order.order_id }}')">
+                    </form>
+            
+                    <form action="/orders/delete/{{ order.order_id }}" method="post" onsubmit="deleteOrder(event, '{{ order.order_id }}')">
+                        <button type="submit" class="delete-btn">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</body>
+</html>

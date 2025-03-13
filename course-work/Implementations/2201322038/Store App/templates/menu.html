@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            animation: slideDown 0.5s ease-in-out;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav .btn {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .nav .btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
+
+        .search-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .search-container .search-input {
+            width: 300px;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .search-container .search-input:focus {
+            border-color: #6a11cb;
+            box-shadow: 0 0 8px rgba(106, 17, 203, 0.5);
+            outline: none;
+        }
+
+        .upload-form {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            animation: slideUp 0.5s ease-in-out;
+        }
+
+        .upload-form h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .upload-form input[type="file"] {
+            margin-bottom: 10px;
+        }
+
+        .products {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 10px;
+        }
+
+        .product-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.5s ease;
+        }
+
+        .product-card.highlight {
+            background-color: #d4edda;
+            animation: highlight 1.5s ease-in-out;
+        }
+
+        @keyframes highlight {
+            0% { background-color: #d4edda; }
+            50% { background-color: #c3e6cb; }
+            100% { background-color: #d4edda; }
+        }
+
+        .product-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .product-details {
+            flex: 1;
+        }
+
+        .product-stats {
+            text-align: right;
+            margin-left: 20px;
+        }
+
+        .product-info h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .product-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .product-card form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 20px;
+        }
+
+        .product-card input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 102px;
+        }
+
+        .product-card button {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .product-card button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
+
+        .delete-btn {
+            background: #ff4757;
+        }
+
+        .delete-btn:hover {
+            background: #ff6b81;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+    <script>
+        function highlightProductCard(productId) {
+            const productCard = document.getElementById(`product-${productId}`);
+            if (productCard) {
+                productCard.classList.add('highlight');
+                setTimeout(() => {
+                    productCard.classList.remove('highlight');
+                }, 1500);
+            }
+        }
+
+        async function submitOrderForm(event, productId) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    highlightProductCard(productId);
+                } else {
+                    alert('Failed to place the order. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        function searchProducts() {
+            const query = document.getElementById("searchInput").value.toLowerCase();
+            const productCards = document.querySelectorAll(".product-card");
+
+            productCards.forEach(card => {
+                const name = card.querySelector(".product-name").textContent.toLowerCase();
+                if (name.includes(query)) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Продукти</h1>
+        <div class="nav">
+            <a href="/orders" class="btn">Кошница</a>
+            <form action="/logout" method="post" style="display:inline;">
+                <button type="submit" class="btn">Излез</button>
+            </form>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Търсене на продукт по име..." oninput="searchProducts()">
+        </div>
+
+        {% if is_admin %}
+        <div class="upload-form">
+            <h2>Качване на продукти от Excel файл</h2>
+            <form action="/upload-products/" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".xlsx" required>
+                <button type="submit" class="btn">Качи файл</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div class="products">
+            {% for product in products %}
+            <div class="product-card" id="product-{{ product.product_code }}">
+                <div class="product-info">
+                    <div class="product-details">
+                        <h3>{{ product.product_code }}</h3>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                    </div>
+                    <div class="product-stats">
+                        <p><strong>Цена:</strong> {{ product.price }}лв.</p>
+                        <p><strong>Брой в стек:</strong> {{ product.quantity }}</p>
+                    </div>
+                </div>
+
+                <form action="/order/{{ product.product_code }}" method="post" onsubmit="submitOrderForm(event, '{{ product.product_code }}')">
+                    <input type="number" name="quantity" min="1" placeholder="Брой стекове" onfocus="this.placeholder = ''" onblur="this.placeholder = 'Бр. стекове'">
+                    <button type="submit">Добави към кошница</button>
+                </form>
+
+                {% if is_admin %}
+                <form action="/products/delete/{{ product.product_code }}" method="post">
+                    <button type="submit" class="delete-btn">Изтрий</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 24px;
+            animation: slideDown 0.5s ease-in-out;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.5s ease-in-out;
+        }
+
+        input {
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #6a11cb;
+            box-shadow: 0 0 8px rgba(106, 17, 203, 0.5);
+            outline: none;
+        }
+
+        button {
+            padding: 12px;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
+
+        .error {
+            color: #ff4757;
+            font-weight: bold;
+            margin-bottom: 15px;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .toggle-form {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .toggle-form a {
+            color: #6a11cb;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .toggle-form a:hover {
+            color: #2575fc;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div id="login-section">
+            <h1>Login</h1>
+            {% if login_error %}
+            <div class="error">
+                {{ login_error }}
+            </div>
+            {% endif %}
+            <form action="/login" method="post">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+
+        <div id="register-section" style="display: none;">
+            <h1>Register</h1>
+            {% if register_error %}
+            <div class="error">
+                {{ register_error }}
+            </div>
+            {% endif %}
+            <form action="/register" method="post">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Register</button>
+            </form>
+        </div>
+
+        <div class="toggle-form">
+            <span id="toggle-text">Don't have an account? <a href="#" id="toggle-link">Register here</a>.</span>
+        </div>
+    </div>
+
+    <script>
+        const loginSection = document.getElementById('login-section');
+        const registerSection = document.getElementById('register-section');
+        const toggleText = document.getElementById('toggle-text');
+
+        function toggleForms() {
+            if (loginSection.style.display === 'none') {
+                loginSection.style.display = 'block';
+                registerSection.style.display = 'none';
+                toggleText.innerHTML = `Don't have an account? <a href="#" id="toggle-link">Register here</a>.`;
+            } else {
+                loginSection.style.display = 'none';
+                registerSection.style.display = 'block';
+                toggleText.innerHTML = `Already have an account? <a href="#" id="toggle-link">Login here</a>.`;
+            }
+            document.getElementById('toggle-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleForms();
+            });
+        }
+
+        document.getElementById('toggle-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleForms();
+        });
+    </script>
+</body>
+</html>
